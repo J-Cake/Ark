@@ -1,0 +1,16 @@
+graph TB
+    tokens((Tokens)) --> someLeft{Tokens left}
+    someLeft --> |Yes| accumulate[Accumulate Tokens into Statement]
+    someLeft --> |No| finish((Return list of tokens))
+    accumulate --> isNewline{Token is newline}
+    isNewline --> |Yes| match[Match tokens agains list of syntactical rules]
+    isNewline --> |No| isBlock{Token is Block}
+    isBlock --> |No| tokens
+    isBlock --> |Yes| Lex --> Parse --> Wrap --> accumulate
+    match --> matches{Found Match}
+    matches --> |Yes| stash[Place all matched tokens in a separate ordered list]
+    matches --> |No| tokens
+    stash --> sort
+    sort --> list[Store List for later use]
+    list --> clear[Clear accumulator]
+    clear --> tokens

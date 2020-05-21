@@ -1,0 +1,11 @@
+graph TD
+    scope((Parent Scope)) & statements((Statements)) --> newScope[Create new Scope]
+    newScope & statements --> readLine[Read the next line in the sequence]
+    readLine --> read[Read Next Token In Line]
+    read --> isOperand{Popped token is operand}
+    isOperand --> |Yes| push[Push it onto a stack] --> read
+    isOperand --> |No| doublePop[Pop Two elements of the stack into A and B]
+    isOperand --> |No More Tokens| return[Expression yields popped result]
+    return --> readLine
+    doublePop --> eval[Evaluate A operator B]
+    eval --> push

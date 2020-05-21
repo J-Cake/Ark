@@ -1,0 +1,20 @@
+graph TB
+    char((Characters)) --> accumulate[Accumulate tokens in accumulator]
+    accumulate --> newline{Character is line break}
+    newline --> |Yes| empty{Accumulator is empty}
+    newline --> |No| literal{Character is literal delimiter}
+    literal --> |No| terminal{Character Terminates Token} 
+    literal --> |Yes| closing{Character is correct closing char}
+    closing --> |Yes| match[Match Token Against Grammar Rules]
+    closing --> |No| char
+    terminal --> |Yes| match
+    terminal --> |No| char
+
+    empty --> |Yes| done((Return list of tokens))
+    empty --> |No| error((SyntaxError))
+
+    match --> matches{Token matches rules}
+    matches --> |Yes| append[Append the token to a list of other tokens]
+    append --> clear[Clear the accumulator]
+    clear --> char
+    matches --> |No| error
