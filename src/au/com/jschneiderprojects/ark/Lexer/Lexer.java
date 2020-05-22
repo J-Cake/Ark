@@ -81,7 +81,7 @@ public class Lexer extends Stage<String, ArrayList<Token>> {
         int line = 1;
         int charIndex = 1;
 
-        boolean escaped;
+        boolean escaped = false;
 
         StringBuilder lineContainer = new StringBuilder();
         int lineIndent = 0;
@@ -89,47 +89,49 @@ public class Lexer extends Stage<String, ArrayList<Token>> {
         boolean hasBlockCollected = false;
 
         for (char i : source.toCharArray()) {
-            accumulator.append(i);
-            lineContainer.append(i);
-            escaped = i == config.escapeChar;
+            if (i == config.escapeChar) {
+                escaped = true;
+            } else {
+                accumulator.append(i);
+                lineContainer.append(i);
 
-            if (i != '\t' && i != ' ') {
-                String lineString = lineContainer.toString();
-                int nonIndentIndex = lineString.indexOf(isSpaceBasedIndent ? ' ' : '\t');
-                if (nonIndentIndex > -1 && indentCharacterRepeat > 0)
-                    lineIndent = lineString.substring(0, nonIndentIndex + 1).length() / indentCharacterRepeat;
-            }
-            if (i == '\n')
-                lineContainer = new StringBuilder();
+                if (i != '\t' && i != ' ') {
+                    String lineString = lineContainer.toString();
+                    int nonIndentIndex = lineString.indexOf(isSpaceBasedIndent ? ' ' : '\t');
+                    if (nonIndentIndex > -1 && indentCharacterRepeat > 0)
+                        lineIndent = lineString.substring(0, nonIndentIndex + 1).length() / indentCharacterRepeat;
+                }
+                if (i == '\n')
+                    lineContainer = new StringBuilder();
 
-//            System.out.println(lineIndent + accumulator.toString());
-
-            if (!escaped) {
-                if (lineIndent <= 0) {
-                    if (hasBlockCollected) {
-                        tokens.add(new Token(TokenType.Block, accumulator.toString(), new Origin(config.filename, line, charIndex), lineIndent));
-                        accumulator = new StringBuilder();
-                        hasBlockCollected = false;
-                    } else {
-                        Origin origin = new Origin(config.filename, line, charIndex);
-                        String token = accumulator.toString().trim();
-
-                        if ((i == '\n' || i == '\r') && !matcher.isOpen(token)) {
-                            if (token.length() == 0) {
-                                tokens.add(new Token(TokenType.NewLine, "", origin, lineIndent));
-                                line++;
-                                charIndex = 1;
-                            } else
-                                tokens.add(new Token(matcher.resolve(token), token, origin, lineIndent));
+                if (!escaped) {
+                    if (lineIndent <= 0) {
+                        if (hasBlockCollected) {
+                            tokens.add(new Token(TokenType.Block, accumulator.toString(), new Origin(config.filename, line, charIndex), lineIndent));
                             accumulator = new StringBuilder();
-                        } else if (matcher.isClosed(token) && matcher.resolve(token) != null || (i == ' ' && !matcher.isOpen(token))) { // is literal delimiter
-                            if (token.length() > 0)
-                                tokens.add(new Token(matcher.resolve(token), token, origin, lineIndent));
-                            accumulator = new StringBuilder();
+                            hasBlockCollected = false;
+                        } else {
+                            Origin origin = new Origin(config.filename, line, charIndex);
+                            String token = accumulator.toString().trim();
+
+                            if ((i == '\n' || i == '\r') && !matcher.isOpen(token)) {
+                                if (token.length() == 0) {
+                                    tokens.add(new Token(TokenType.NewLine, "", origin, lineIndent));
+                                    line++;
+                                    charIndex = 1;
+                                } else
+                                    tokens.add(new Token(matcher.resolve(token), token, origin, lineIndent));
+                                accumulator = new StringBuilder();
+                            } else if (matcher.isClosed(token) && matcher.resolve(token) != null || (i == ' ' && !matcher.isOpen(token))) { // is literal delimiter
+                                if (token.length() > 0)
+                                    tokens.add(new Token(matcher.resolve(token), token, origin, lineIndent));
+                                accumulator = new StringBuilder();
+                            }
                         }
-                    }
-                } else
-                    hasBlockCollected = true;
+                    } else
+                        hasBlockCollected = true;
+                }
+                escaped = false;
             }
         }
 

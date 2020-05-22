@@ -1,8 +1,8 @@
 package au.com.jschneiderprojects.ark.Lexer.Grammar;
 
-import au.com.jschneiderprojects.ark.Executer.Constructs;
 import au.com.jschneiderprojects.ark.Formatter.Operators;
 import au.com.jschneiderprojects.ark.Lexer.Token;
+import au.com.jschneiderprojects.ark.Executer.Construct;
 
 import java.util.ArrayList;
 import java.util.regex.Matcher;
@@ -65,11 +65,13 @@ class Grammar {
             return regularExpression.find();
         }
     };
-    final TokenRule Construct = new TokenRule(TokenType.Construct) {
+    final TokenRule SConstruct = new TokenRule(TokenType.Construct) {
         @Override
         boolean matches(String characters, ArrayList<Token> prev, int indentation) {
-            for (String construct : Constructs.Constructs)
-                if (characters.equals(construct))
+            Construct[] entries = Construct.values();
+
+            for (Construct entry : entries)
+                if (entry.identifier.equals(characters))
                     return true;
             return false;
         }
@@ -112,5 +114,5 @@ class Grammar {
         }
     };
 
-    TokenRule[] rules = new TokenRule[]{LeftBrace, LeftBracket, LeftParenthesis, RightBrace, RightBracket, RightParenthesis, String, Int, Float, Boolean, Operator, Construct, Reference, Null, Block};
+    TokenRule[] rules = new TokenRule[]{LeftBrace, LeftBracket, LeftParenthesis, RightBrace, RightBracket, RightParenthesis, String, Int, Float, Boolean, Operator, SConstruct, Reference, Null, Block};
 }
