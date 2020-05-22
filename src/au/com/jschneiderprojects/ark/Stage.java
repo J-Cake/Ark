@@ -1,5 +1,7 @@
 package au.com.jschneiderprojects.ark;
 
+import javax.lang.model.type.NullType;
+
 public abstract class Stage<Input, Output> {
     public Config preferences;
 

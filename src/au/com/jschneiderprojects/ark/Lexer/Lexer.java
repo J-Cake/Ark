@@ -9,9 +9,12 @@ import au.com.jschneiderprojects.ark.Lexer.Grammar.TokenType;
 import au.com.jschneiderprojects.ark.Stage;
 
 import java.util.ArrayList;
+import java.util.concurrent.Phaser;
 
 public class Lexer extends Stage<String, ArrayList<Token>> {
     GrammarMatcher matcher;
+
+    boolean isSpaceBasedIndent = true;
 
     public Lexer(Config<LexConfig> config) {
         super(config);
@@ -22,43 +25,52 @@ public class Lexer extends Stage<String, ArrayList<Token>> {
 
     int detectIndentationLevel(String source) {
         LexConfig config = (LexConfig) (preferences.options);
-        int indentationType = 0;
-        ArrayList<Integer> indentLevel = new ArrayList<>();
 
-        String[] split = source.split("\n|\r\n|\r");
-        for (int a = 0; a < split.length; a++) {
-            String line = split[a];
+        String[] lines = source.split("\n");
 
-            if ((indentationType == 2 && line.charAt(0) == ' ') || (indentationType == 1 && line.charAt(0) == '\t'))
-                new Error(new Origin(config.filename, a + 1, 0), ErrorType.Syntax, "Inconsistent Indentation");
-            else if (indentationType == 0)
-                indentationType = line.charAt(0) == ' ' ? 1 : (line.charAt(0) == '\t' ? 2 : 0);
+        ArrayList<Integer> leadingSpaces = new ArrayList<>();
+        ArrayList<Integer> leadingTabs = new ArrayList<>();
 
-            int indentation = 0;
+        for (String line : lines) {
+            int leadingSpace = 0;
+            int leadingTab = 0;
 
-            for (char i : line.toCharArray())
-                if (i == ' ' || i == '\t')
-                    indentation++;
+            for (char c : line.toCharArray())
+                if (c == ' ')
+                    leadingSpace++;
+                else if (c == '\t')
+                    leadingTab++;
                 else
                     break;
 
-            indentLevel.add(indentation);
+            if (leadingSpace > 0)
+                leadingSpaces.add(leadingSpace);
+            if (leadingTab > 0)
+                leadingTabs.add(leadingTab);
         }
 
-        int minIndent = Integer.MAX_VALUE;
+        if ((leadingSpaces.size() > 0 && leadingTabs.size() > 0))
+            super.internalError(new Error(new Origin(config.filename, 0, 0), ErrorType.Syntax, "Inconsistent Indentation").verbose("Detecting indentation failed due to inconsistent indentation"), true);
+        else if (leadingSpaces.size() == 0 && leadingTabs.size() == 0)
+            return -1;
+        else {
+            int min = Integer.MAX_VALUE;
+            for (int line : leadingSpaces.size() > leadingTabs.size() ? leadingSpaces : leadingTabs)
+                if (line < min) min = line;
 
-        for (int indent : indentLevel)
-            if (indent > 0 && indent < minIndent)
-                minIndent = indent;
+            isSpaceBasedIndent = leadingSpaces.size() > leadingTabs.size();
 
-        return minIndent;
+            return min;
+        }
+
+        return -1;
     }
 
     public ArrayList<Token> receiveInput(String source) {
         // lex the incoming source code
         LexConfig config = (LexConfig) (preferences.options);
 
-        int indent = detectIndentationLevel(source);
+        int indentCharacterRepeat = detectIndentationLevel(source);
 
         ArrayList<Token> tokens = new ArrayList<>();
         StringBuilder accumulator = new StringBuilder();
@@ -70,45 +82,76 @@ public class Lexer extends Stage<String, ArrayList<Token>> {
 
         boolean escaped;
 
+        StringBuilder lineContainer = new StringBuilder();
+        int lineIndent = 0;
+
+        boolean hasBlockCollected = false;
+
         for (char i : source.toCharArray()) {
             accumulator.append(i);
+            lineContainer.append(i);
             escaped = i == config.escapeChar;
 
-            if (!escaped) {
-                Origin origin = new Origin(config.filename, line, charIndex);
-                String token = accumulator.toString().trim();
+            if (i != '\t' && i != ' ') {
+                String lineString = lineContainer.toString();
+                int nonIndentIndex = lineString.indexOf(isSpaceBasedIndent ? ' ' : '\t');
+                if (nonIndentIndex > -1)
+                    lineIndent = lineString.substring(0, nonIndentIndex + 1).length() / indentCharacterRepeat;
+            }
+            if (i == '\n')
+                lineContainer = new StringBuilder();
 
-                if (i == '\n' || i == '\r') {
-                    if (token.length() == 0) {
-                        tokens.add(new Token(TokenType.NewLine, "", origin, indent));
-                        line++;
-                        charIndex = 1;
+            if (!escaped) {
+                System.out.println(hasBlockCollected);
+                if (lineIndent == 0) {
+                    if (hasBlockCollected) {
+                        System.out.println(accumulator.toString());
+                        tokens.add(new Token(TokenType.Block, accumulator.toString(), new Origin(config.filename, line, charIndex), lineIndent));
                         accumulator = new StringBuilder();
+                        hasBlockCollected = false;
                     } else {
-                        String notBlankError = "Unexpected Token '" + token + "'";
-                        super.internalError(new Error(origin, ErrorType.Syntax, notBlankError).verbose("Accumulator Not Empty"), config.verboseLexLog);
-                        return null;
+                        Origin origin = new Origin(config.filename, line, charIndex);
+                        String token = accumulator.toString().trim();
+
+                        if ((i == '\n' || i == '\r') && !matcher.isOpen(token)) {
+                            if (token.length() == 0) {
+                                tokens.add(new Token(TokenType.NewLine, "", origin, lineIndent));
+                                line++;
+                                charIndex = 1;
+                                accumulator = new StringBuilder();
+                            } else {
+                                String notBlankError = "Unexpected Token '" + token + "'";
+                                super.internalError(new Error(origin, ErrorType.Syntax, notBlankError).verbose("Accumulator Not Empty"), config.verboseLexLog);
+                                return null;
+                            }
+                        } else if (matcher.isClosed(token) && matcher.resolve(token) != null || (i == ' ' && !matcher.isOpen(token))) { // is literal delimiter
+                            if (token.length() > 0)
+                                tokens.add(new Token(matcher.resolve(token), token, origin, lineIndent));
+                            accumulator = new StringBuilder();
+                        }
                     }
-                } else if (matcher.isClosed(token) && matcher.resolve(token) != null || (i == ' ' && !matcher.isOpen(token))) { // is literal delimiter
-                    if (token.length() > 0)
-                        tokens.add(new Token(matcher.resolve(token), token, origin, indent));
-                    accumulator = new StringBuilder();
-                } // else accumulate
-            } // else accumulate
+                } else
+                    hasBlockCollected = true;
+            }
         }
 
         if (accumulator.toString().trim().length() > 0)
-            tokens.add(new Token(matcher.resolve(accumulator.toString().trim()), accumulator.toString().trim(), new Origin(config.filename, line, charIndex), indent));
+            if (hasBlockCollected)
+                tokens.add(new Token(TokenType.Block, accumulator.toString(), new Origin(config.filename, line, charIndex), lineIndent));
+            else
+                tokens.add(new Token(matcher.resolve(accumulator.toString().trim()), accumulator.toString().trim(), new Origin(config.filename, line, charIndex), lineIndent));
 
         StringBuilder log = new StringBuilder(); // basic output
 
         System.out.println("Captured " + tokens.size() + " tokens:");
 
         for (Token t : tokens) {
-            log.append(t.type);
-            log.append(": ");
-            log.append(t.source);
-            log.append(", ");
+            log.append(t.type)
+                    .append("(>")
+                    .append(t.indentationLevel)
+                    .append("): ")
+                    .append(t.source)
+                    .append(", ");
         }
         System.out.println(log.toString());
 
