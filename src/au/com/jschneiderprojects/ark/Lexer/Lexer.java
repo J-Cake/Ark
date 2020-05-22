@@ -102,10 +102,8 @@ public class Lexer extends Stage<String, ArrayList<Token>> {
                 lineContainer = new StringBuilder();
 
             if (!escaped) {
-                System.out.println(hasBlockCollected);
                 if (lineIndent == 0) {
                     if (hasBlockCollected) {
-                        System.out.println(accumulator.toString());
                         tokens.add(new Token(TokenType.Block, accumulator.toString(), new Origin(config.filename, line, charIndex), lineIndent));
                         accumulator = new StringBuilder();
                         hasBlockCollected = false;
@@ -120,9 +118,8 @@ public class Lexer extends Stage<String, ArrayList<Token>> {
                                 charIndex = 1;
                                 accumulator = new StringBuilder();
                             } else {
-                                String notBlankError = "Unexpected Token '" + token + "'";
-                                super.internalError(new Error(origin, ErrorType.Syntax, notBlankError).verbose("Accumulator Not Empty"), config.verboseLexLog);
-                                return null;
+                                tokens.add(new Token(matcher.resolve(token), token, origin, lineIndent));
+                                accumulator = new StringBuilder();
                             }
                         } else if (matcher.isClosed(token) && matcher.resolve(token) != null || (i == ' ' && !matcher.isOpen(token))) { // is literal delimiter
                             if (token.length() > 0)

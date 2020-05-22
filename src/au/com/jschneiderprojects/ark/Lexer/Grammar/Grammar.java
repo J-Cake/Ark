@@ -1,7 +1,6 @@
 package au.com.jschneiderprojects.ark.Lexer.Grammar;
 
 import au.com.jschneiderprojects.ark.Formatter.Operators;
-import au.com.jschneiderprojects.ark.Lexer.Lexer;
 import au.com.jschneiderprojects.ark.Lexer.Token;
 
 import java.util.ArrayList;
@@ -57,6 +56,14 @@ class Grammar {
             return prev.get(prev.size() - 1).indentationLevel <= indentation;
         }
     };
+    final TokenRule Reference = new TokenRule(TokenType.Reference) {
+        @Override
+        boolean matches(java.lang.String characters, ArrayList<Token> prev, int indentation) {
+            Matcher regularExpression = Pattern.compile("^[$_#&?a-zA-Z][$_#&?a-zA-Z0-9]*$").matcher(characters);
 
-    TokenRule[] rules = new TokenRule[]{String, Int, Float, Boolean, Operator, Null, Block};
+            return regularExpression.find();
+        }
+    };
+
+    TokenRule[] rules = new TokenRule[]{String, Int, Float, Boolean, Operator, Reference, Null, Block};
 }
