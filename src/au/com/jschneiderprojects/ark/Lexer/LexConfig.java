@@ -4,4 +4,5 @@ public interface LexConfig {
     String filename = "<Inline>";
     char escapeChar = '\\';
     boolean verboseLexLog = true;
+    int defaultIndent = 0;
 }

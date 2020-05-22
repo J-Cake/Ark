@@ -26,8 +26,7 @@ public class Main {
 
     private static String loadProgram(String filename) {
         if (filename.equals("Test"))
-//            return "\"Hello\" 12.4 * 365 \n\t\"Indented\" \n\t\"Also Indented\"";
-            return "1 + 2 = 3\nif x == 3\n\treturn true";
+            return "int a = 2";
         else
             return "";
     }

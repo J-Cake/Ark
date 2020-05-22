@@ -8,6 +8,7 @@ public enum TokenType {
     Null,
     Block,
     Operator,
+    Construct,
     LeftParenthesis,
     RightParenthesis,
     LeftBracket,

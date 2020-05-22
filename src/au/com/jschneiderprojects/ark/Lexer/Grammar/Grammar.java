@@ -1,5 +1,6 @@
 package au.com.jschneiderprojects.ark.Lexer.Grammar;
 
+import au.com.jschneiderprojects.ark.Executer.Constructs;
 import au.com.jschneiderprojects.ark.Formatter.Operators;
 import au.com.jschneiderprojects.ark.Lexer.Token;
 
@@ -59,11 +60,57 @@ class Grammar {
     final TokenRule Reference = new TokenRule(TokenType.Reference) {
         @Override
         boolean matches(java.lang.String characters, ArrayList<Token> prev, int indentation) {
-            Matcher regularExpression = Pattern.compile("^[$_#&?a-zA-Z][$_#&?a-zA-Z0-9]*$").matcher(characters);
+            Matcher regularExpression = Pattern.compile("^[$_#&?@a-zA-Z][$_#&?@a-zA-Z0-9]*$").matcher(characters);
 
             return regularExpression.find();
         }
     };
+    final TokenRule Construct = new TokenRule(TokenType.Construct) {
+        @Override
+        boolean matches(String characters, ArrayList<Token> prev, int indentation) {
+            for (String construct : Constructs.Constructs)
+                if (characters.equals(construct))
+                    return true;
+            return false;
+        }
+    };
 
-    TokenRule[] rules = new TokenRule[]{String, Int, Float, Boolean, Operator, Reference, Null, Block};
+    final TokenRule LeftParenthesis = new TokenRule(TokenType.LeftParenthesis) {
+        @Override
+        boolean matches(java.lang.String characters, ArrayList<Token> prev, int indentation) {
+            return characters.equals("(");
+        }
+    };
+    final TokenRule RightParenthesis = new TokenRule(TokenType.RightParenthesis) {
+        @Override
+        boolean matches(java.lang.String characters, ArrayList<Token> prev, int indentation) {
+            return characters.equals(")");
+        }
+    };
+    final TokenRule LeftBracket = new TokenRule(TokenType.LeftBracket) {
+        @Override
+        boolean matches(java.lang.String characters, ArrayList<Token> prev, int indentation) {
+            return characters.equals("[");
+        }
+    };
+    final TokenRule RightBracket = new TokenRule(TokenType.RightBracket) {
+        @Override
+        boolean matches(java.lang.String characters, ArrayList<Token> prev, int indentation) {
+            return characters.equals("]");
+        }
+    };
+    final TokenRule LeftBrace = new TokenRule(TokenType.LeftBrace) {
+        @Override
+        boolean matches(java.lang.String characters, ArrayList<Token> prev, int indentation) {
+            return characters.equals("{");
+        }
+    };
+    final TokenRule RightBrace = new TokenRule(TokenType.RightBrace) {
+        @Override
+        boolean matches(java.lang.String characters, ArrayList<Token> prev, int indentation) {
+            return characters.equals("}");
+        }
+    };
+
+    TokenRule[] rules = new TokenRule[]{LeftBrace, LeftBracket, LeftParenthesis, RightBrace, RightBracket, RightParenthesis, String, Int, Float, Boolean, Operator, Construct, Reference, Null, Block};
 }

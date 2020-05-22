@@ -9,7 +9,6 @@ import au.com.jschneiderprojects.ark.Lexer.Grammar.TokenType;
 import au.com.jschneiderprojects.ark.Stage;
 
 import java.util.ArrayList;
-import java.util.concurrent.Phaser;
 
 public class Lexer extends Stage<String, ArrayList<Token>> {
     GrammarMatcher matcher;
@@ -71,6 +70,8 @@ public class Lexer extends Stage<String, ArrayList<Token>> {
         LexConfig config = (LexConfig) (preferences.options);
 
         int indentCharacterRepeat = detectIndentationLevel(source);
+        if (indentCharacterRepeat == -1)
+            indentCharacterRepeat = config.defaultIndent;
 
         ArrayList<Token> tokens = new ArrayList<>();
         StringBuilder accumulator = new StringBuilder();
@@ -95,14 +96,16 @@ public class Lexer extends Stage<String, ArrayList<Token>> {
             if (i != '\t' && i != ' ') {
                 String lineString = lineContainer.toString();
                 int nonIndentIndex = lineString.indexOf(isSpaceBasedIndent ? ' ' : '\t');
-                if (nonIndentIndex > -1)
+                if (nonIndentIndex > -1 && indentCharacterRepeat > 0)
                     lineIndent = lineString.substring(0, nonIndentIndex + 1).length() / indentCharacterRepeat;
             }
             if (i == '\n')
                 lineContainer = new StringBuilder();
 
+//            System.out.println(lineIndent + accumulator.toString());
+
             if (!escaped) {
-                if (lineIndent == 0) {
+                if (lineIndent <= 0) {
                     if (hasBlockCollected) {
                         tokens.add(new Token(TokenType.Block, accumulator.toString(), new Origin(config.filename, line, charIndex), lineIndent));
                         accumulator = new StringBuilder();
@@ -116,11 +119,9 @@ public class Lexer extends Stage<String, ArrayList<Token>> {
                                 tokens.add(new Token(TokenType.NewLine, "", origin, lineIndent));
                                 line++;
                                 charIndex = 1;
-                                accumulator = new StringBuilder();
-                            } else {
+                            } else
                                 tokens.add(new Token(matcher.resolve(token), token, origin, lineIndent));
-                                accumulator = new StringBuilder();
-                            }
+                            accumulator = new StringBuilder();
                         } else if (matcher.isClosed(token) && matcher.resolve(token) != null || (i == ' ' && !matcher.isOpen(token))) { // is literal delimiter
                             if (token.length() > 0)
                                 tokens.add(new Token(matcher.resolve(token), token, origin, lineIndent));
