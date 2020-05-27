@@ -22,7 +22,7 @@ class TokenRule {
         this.delimiter = delimiters;
     }
 
-    boolean matches(String characters, ArrayList<Token> prev, int indentation) {
+    boolean matches(String characters, ArrayList<Token> prev) {
         return false;
     }
 

@@ -9,6 +9,8 @@ public enum TokenType {
     Block,
     Operator,
     Construct,
+    Comma,
+    Subreference,
     LeftParenthesis,
     RightParenthesis,
     LeftBracket,
