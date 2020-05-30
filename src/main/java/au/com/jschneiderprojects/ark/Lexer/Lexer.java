@@ -26,8 +26,13 @@ public class Lexer extends Stage<String, ArrayList<Token>> {
     }
 
     public int getLevel(String line) {
+        int index = line.indexOf('\n');
+
         if (this.indent.length() > 0)
-            return line.split(this.indent).length - 1;
+            if (index > -1)
+                return line.substring(0, index).split(this.indent).length - 1;
+            else
+                return line.split(this.indent).length - 1;
         return 0;
     }
 
@@ -126,6 +131,9 @@ public class Lexer extends Stage<String, ArrayList<Token>> {
                     initBlockIndent = indentLevel;
             }
         }
+
+        System.out.println(accumulator.toString());
+        System.out.println(initBlockIndent + ", " + indentLevel + ", " + (initBlockIndent != null && initBlockIndent == indentLevel && this.containsNonIndentCharacter(accumulator.toString())));
 
         if (accumulator.toString().trim().length() > 0)
             if (initBlockIndent != null && initBlockIndent == indentLevel && this.containsNonIndentCharacter(accumulator.toString()))
