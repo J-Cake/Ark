@@ -34,7 +34,7 @@ class TokenRule {
 
     boolean isDelimiterOpen(String characters) {
         if (delimiter != null)
-            return characters.indexOf(delimiter.x) == characters.lastIndexOf(delimiter.y) && characters.indexOf(delimiter.x) > -1;
+            return characters.indexOf(delimiter.x) >= 0;
         return false;
     }
 

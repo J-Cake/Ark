@@ -14,4 +14,8 @@ public class Token {
         this.origin = origin;
         this.indentationLevel = indentationLevel;
     }
+
+    public String getValue() {
+        return this.source;
+    }
 }

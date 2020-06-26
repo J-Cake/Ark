@@ -10,7 +10,7 @@ public enum TokenType {
     Operator,
     Construct,
     Comma,
-    Subreference,
+    SubReference,
     LeftParenthesis,
     RightParenthesis,
     LeftBracket,
@@ -18,5 +18,7 @@ public enum TokenType {
     LeftBrace,
     RightBrace,
     Reference,
-    NewLine
+    NewLine,
+    Comment,
+    FunctionCall
 }

@@ -3,6 +3,7 @@ package au.com.jschneiderprojects.ark.Lexer.Grammar;
 import au.com.jschneiderprojects.ark.Formatter.Operators;
 import au.com.jschneiderprojects.ark.Lexer.Token;
 import au.com.jschneiderprojects.ark.Executer.Construct;
+import au.com.jschneiderprojects.ark.Log;
 
 import java.util.ArrayList;
 import java.util.regex.Matcher;
@@ -12,7 +13,9 @@ class Grammar {
     final TokenRule String = new TokenRule(TokenType.String, '"') {
         @Override
         boolean matches(String characters, ArrayList<Token> prev) {
-            return this.isWrappedByDelimiter(characters);
+            Matcher regularExpression = Pattern.compile("^\".[^\"]*\"$").matcher(characters);
+
+            return this.isWrappedByDelimiter(characters) && regularExpression.find();
         }
     };
     final TokenRule Int = new TokenRule(TokenType.Int) {
@@ -61,7 +64,7 @@ class Grammar {
     final TokenRule Reference = new TokenRule(TokenType.Reference) {
         @Override
         boolean matches(java.lang.String characters, ArrayList<Token> prev) {
-            Matcher regularExpression = Pattern.compile("^[$_#&?@a-zA-Z][$_#&?@a-zA-Z0-9]*$").matcher(characters);
+            Matcher regularExpression = Pattern.compile("^[$_&?@a-zA-Z][$_&?@a-zA-Z0-9]*$").matcher(characters);
 
             return regularExpression.find();
         }
@@ -120,12 +123,18 @@ class Grammar {
             return characters.equals(",");
         }
     };
-    final TokenRule SubReference = new TokenRule(TokenType.Subreference) {
+    final TokenRule SubReference = new TokenRule(TokenType.SubReference) {
         @Override
         boolean matches(java.lang.String characters, ArrayList<Token> prev) {
             return characters.equals(".");
         }
     };
+    final TokenRule Comment = new TokenRule(TokenType.Comment, new Tuple<>('#', '\n')) {
+        @Override
+        boolean matches(java.lang.String characters, ArrayList<Token> prev) {
+            return this.isDelimiterOpen(characters.trim());
+        }
+    };
 
-    TokenRule[] rules = new TokenRule[]{LeftBrace, LeftBracket, LeftParenthesis, RightBrace, RightBracket, RightParenthesis, String, Int, Float, Boolean, Operator, SConstruct, Reference, Null, Block};
+    TokenRule[] rules = new TokenRule[]{LeftBrace, LeftBracket, LeftParenthesis, RightBrace, RightBracket, RightParenthesis, String, Int, Float, Boolean, Operator, SConstruct, Reference, Null, Block, Comma, SubReference, Comment};
 }

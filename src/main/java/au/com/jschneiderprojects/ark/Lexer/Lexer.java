@@ -1,20 +1,16 @@
 package au.com.jschneiderprojects.ark.Lexer;
 
-import au.com.jschneiderprojects.ark.Config;
-import au.com.jschneiderprojects.ark.ErrorType;
+import au.com.jschneiderprojects.ark.*;
 import au.com.jschneiderprojects.ark.Error;
 import au.com.jschneiderprojects.ark.Lexer.Grammar.GrammarConfig;
 import au.com.jschneiderprojects.ark.Lexer.Grammar.GrammarMatcher;
 import au.com.jschneiderprojects.ark.Lexer.Grammar.TokenType;
-import au.com.jschneiderprojects.ark.Stage;
 
 import java.util.ArrayList;
 
 public class Lexer extends Stage<String, ArrayList<Token>> {
     GrammarMatcher matcher;
-    String indent;
-
-    boolean isSpaceBasedIndent = true;
+    public String indent;
 
     public Lexer(Config<LexConfig> config) {
         super(config);
@@ -72,96 +68,118 @@ public class Lexer extends Stage<String, ArrayList<Token>> {
         LexConfig config = (LexConfig) (preferences.options);
 
         ArrayList<Token> tokens = new ArrayList<>();
-        StringBuilder accumulator = new StringBuilder();
 
-        matcher.setTokenList(tokens);
+        StringBuilder blockContent = new StringBuilder();
+        StringBuilder line = new StringBuilder();
 
-        int line = 1;
-        int charIndex = 1;
+        this.indent = this.getIndent(source);
 
-        boolean escaped;
+        int lineCounter = 0;
 
-        StringBuilder lineContainer = new StringBuilder();
-        int indentLevel = 0;
-
-        Integer initBlockIndent = null;
-
-        this.getIndent(source);
-
-        int prevIndentLevel = 0;
-
+        boolean isEscaped = false;
         for (char i : source.toCharArray()) {
-            escaped = i == config.escapeChar;
-            accumulator.append(i);
+            if (i == config.escapeChar)
+                isEscaped = true;
 
-            lineContainer.append(i);
+            line.append(i);
 
-            if (this.containsNonIndentCharacter(lineContainer.toString()) && lineContainer.length() > 0)
-                indentLevel = this.getLevel(lineContainer.toString());
+            if (!isEscaped && i == '\n') {
+                if (this.containsNonWhitespace(line.toString())) {
+                    int indent = getLevel(line.toString());
 
-            if (!escaped) {
-                if (indentLevel <= prevIndentLevel) {
-                    Origin origin = new Origin(config.filename, line, charIndex);
+                    if (indent <= 0) {
+                        if (blockContent.length() > 0) {
+                            tokens.add(new Token(TokenType.Block, blockContent.toString(), new Origin(config.filename, lineCounter, indent), indent));
+                            blockContent = new StringBuilder();
+                        }
 
-                    TokenType type = matcher.resolve(accumulator.toString().trim());
-
-                    Token accumulated = null;
-
-                    if (type != null)
-                        accumulated = new Token(type, accumulator.toString().trim(), origin, indentLevel);
-
-                    if (i == '\n') {
-                        if (accumulated != null)
-                            tokens.add(accumulated);
-                        if (this.containsNonIndentCharacter(accumulator.toString()))
-                            tokens.add(new Token(TokenType.NewLine, "", origin, indentLevel));
-                        lineContainer = new StringBuilder();
-                        prevIndentLevel = indentLevel;
-                    } else if (matcher.isClosed(accumulator.toString())) { // important: don't trim
-                        if (accumulated != null)
-                            tokens.add(accumulated);
-                    } else if (!matcher.isOpen(accumulator.toString()) && i == ' ' && this.containsNonIndentCharacter(lineContainer.toString())) {
-                        if (accumulated != null)
-                            tokens.add(accumulated);
+                        this.resolveTokens(config, tokens, line, lineCounter, indent);
                     } else
-                        continue; // skip clear
+                        blockContent.append(line);
 
-                    accumulator = new StringBuilder();
-                } else if (initBlockIndent == null)
-                    initBlockIndent = indentLevel;
+                    line = new StringBuilder();
+                }
             }
+
+            if (i == '\n')
+                lineCounter++;
+
+            isEscaped = false;
         }
 
-        System.out.println(accumulator.toString());
-        System.out.println(initBlockIndent + ", " + indentLevel + ", " + (initBlockIndent != null && initBlockIndent == indentLevel && this.containsNonIndentCharacter(accumulator.toString())));
-
-        if (accumulator.toString().trim().length() > 0)
-            if (initBlockIndent != null && initBlockIndent == indentLevel && this.containsNonIndentCharacter(accumulator.toString()))
-                tokens.add(new Token(TokenType.Block, accumulator.toString(), new Origin(config.filename, line, charIndex), indentLevel));
-            else
-                tokens.add(new Token(matcher.resolve(accumulator.toString().trim()), accumulator.toString().trim(), new Origin(config.filename, line, charIndex), indentLevel));
+        int indent = getLevel(line.toString());
+        if (blockContent.length() > 0)
+            tokens.add(new Token(TokenType.Block, blockContent.toString(), new Origin(config.filename, lineCounter, indent), indent));
+        if (line.length() > 0)
+            this.resolveTokens(config, tokens, line, lineCounter, indent);
 
         StringBuilder log = new StringBuilder(); // basic output
 
-        System.out.println("Captured " + tokens.size() + " tokens:");
+        int totalTokens = 0;
+        for (Token t : tokens)
+            if ((t.type != TokenType.Comment && t.type != TokenType.NewLine) || !config.ignoreWhiteSpaceAndComments)
+                totalTokens++;
 
-        for (Token t : tokens) {
-            log.append(t.type)
-                    .append("(>")
-                    .append(t.indentationLevel)
-                    .append("): ")
-                    .append(t.source)
-                    .append(", ");
+        if (config.verboseLexLog) {
+            if (totalTokens > 0)
+                Log.i("Captured " + totalTokens + " tokens:");
+
+            for (Token t : tokens) {
+                if ((t.type != TokenType.Comment && t.type != TokenType.NewLine) || !config.ignoreWhiteSpaceAndComments)
+                    log.append(t.type)
+                            .append("(")
+                            .append(t.getValue())
+                            .append("), ");
+            }
+
+            if (totalTokens > 0)
+                Log.i(log.toString());
         }
-        System.out.println(log.toString());
 
         return tokens;
     }
 
-    private boolean containsNonIndentCharacter(String line) {
-        for (char c : line.toCharArray())
-            if (c != ' ' && c != '\t')
-                return true;
+    private void resolveTokens(LexConfig config, ArrayList<Token> tokens, StringBuilder line, int lineCounter, int indent) {
+        ArrayList<String> toks = matcher.splitTokens(line.toString());
+        int _char = 0;
+        for (String s : toks) {
+            _char += s.length();
+
+            tokens.add(new Token(matcher.resolve(s), s, new Origin(config.filename, lineCounter, _char), indent));
+        }
+
+        tokens.add(new Token(TokenType.NewLine, "", new Origin(config.filename, lineCounter, _char + 1), indent));
+    }
+
+    public boolean containsNonWhitespace(String line) {
+        if (line.length() > 0)
+            for (char c : line.toCharArray())
+                if (c != ' ' && c != '\t' && c != '\n')
+                    return true;
         return false;
+    }
+
+    public String reduceIndent(String source, Origin origin) {
+        String[] lines = source.split("\n");
+
+        StringBuilder reduced = new StringBuilder();
+
+        for (String line : lines) {
+            if (getLevel(line) == 0 && reduced.length() == 0) // make exception for first line. It's a ridiculous solution but hey
+                reduced.append(line.trim()).append('\n');
+            else if (getLevel(line) > 0) {
+                reduced.append(line.substring(this.indent.length()));
+                reduced.append('\n');
+            } else {
+                if (((LexConfig) this.preferences.options).verboseLexLog)
+                    Log.e(source);
+                this.internalError(new Error(origin, ErrorType.Syntax, "Cannot reduce 0 indentation", true).verbose(line), true);
+                return null;
+            }
+        }
+
+        reduced.deleteCharAt(reduced.length() - 1);
+
+        return reduced.toString();
     }
 }

@@ -3,8 +3,11 @@ package au.com.jschneiderprojects.ark;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
+import java.util.ArrayList;
 import java.util.Scanner;
 
+import au.com.jschneiderprojects.ark.Formatter.Block;
+import au.com.jschneiderprojects.ark.Lexer.Token;
 import org.apache.commons.cli.*;
 
 import au.com.jschneiderprojects.ark.Executer.ExecuteConfig;
@@ -34,7 +37,7 @@ public class Main {
             Scanner reader = new Scanner(index);
 
             while (reader.hasNextLine())
-                file.append(reader.nextLine()).append( "\n");
+                file.append(reader.nextLine()).append("\n");
 
             return file.toString();
         } else
@@ -47,11 +50,19 @@ public class Main {
         Lexer lexer = new Lexer(new Config<>(new LexConfig() {
         })); // Cannot pass configuration parameters to Lexer.
         Formatter formatter = new Formatter(new Config<>(new FormatConfig() {
-        })); // I'm guessing it's the same story here
+        }), lexer); // I'm guessing it's the same story here
         Executer executer = new Executer(new Config<>(new ExecuteConfig() {
-        })); // And here
+        }), formatter); // And here
 
-        Scope global = executer.receiveInput(formatter.receiveInput(lexer.receiveInput(program)));
+        ArrayList<Token> LexOutput = lexer.receiveInput(program);
+        Block FormatOutput = formatter.receiveInput(LexOutput);
+        Scope ExecuteOutput = executer.receiveInput(FormatOutput);
+
+        if (((FormatConfig) formatter.preferences.options).verboseFormatLog)
+            FormatOutput.print();
+
+        Scope global = ExecuteOutput;
+//        Scope global = executer.receiveInput(formatter.receiveInput(lexer.receiveInput(program)));
         // This should give us the global scope that we can use to make changes to the runtime state of the program
     }
 
