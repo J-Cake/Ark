@@ -33,8 +33,8 @@ public class Reference extends Token {
         StringBuilder stringBuilder = new StringBuilder();
 
         for (Token t : tokens)
-            stringBuilder.append(t.source);
+            stringBuilder.append(t.source).append(" ");
 
-        return stringBuilder.toString();
+        return stringBuilder.toString().trim();
     }
 }

@@ -65,35 +65,43 @@ public class Formatter extends Stage<ArrayList<Token>, Block> {
         return new Block(input.get(0).origin, BlockBody);
     }
 
-    private ArrayList<Token> mergeSelectors(ArrayList<Token> input) {
+    public ArrayList<Token> mergeSelectors(ArrayList<Token> input) {
         ArrayList<Token> tokens = new ArrayList<>();
         ArrayList<Token> reference = new ArrayList<>();
 
-        for (Token t : input) {
-            if ((t.type == TokenType.Reference || t.type == TokenType.SubReference) &&
-                            ((reference.size() > 0 && t.type == TokenType.Reference ||
-                                    reference.size() > 0 && t.type != reference.get(reference.size() - 1).type) ||
-                                    reference.size() == 0)) // TODO: only add if previous type != current type
+        for (Token t : input) { // merge selectors
+            if (t.type == TokenType.Reference) {
+                if (reference.size() == 0 || reference.get(reference.size() - 1).type == TokenType.SubReference) {
                     reference.add(t);
-            else {
-                if (reference.size() > 0) {
-                    tokens.add(new Reference(reference, reference.get(0).origin));
-                    reference.clear();
+                    continue;
                 }
-
-                tokens.add(t);
+            } else if (t.type == TokenType.SubReference) {
+                if (reference.size() > 0 && reference.get(reference.size() - 1).type == TokenType.Reference) {
+                    reference.add(t);
+                    continue;
+                }
             }
+
+            if (reference.size() > 0) {
+                tokens.add(new Reference(reference, reference.get(0).origin));
+                reference = new ArrayList<>(); // .clear() may result in changes within the object to carry over into the stored list within the Reference instance. Create a new object instead
+
+                if (t.type == TokenType.Reference) {
+                    reference.add(t);
+                    continue;
+                }
+            }
+            tokens.add(t);
         }
 
-        if (reference.size() > 0)
+        if (reference.size() > 0) {
             tokens.add(new Reference(reference, reference.get(0).origin));
-
-        Log.i(tokens);
+        }
 
         return tokens;
     }
 
-    private ArrayList<Token> findInvocations(ArrayList<Token> input) {
+    public ArrayList<Token> findInvocations(ArrayList<Token> input) {
         ArrayList<Token> tokens = new ArrayList<>();
 
         ArrayList<Token> parameters = new ArrayList<>();
