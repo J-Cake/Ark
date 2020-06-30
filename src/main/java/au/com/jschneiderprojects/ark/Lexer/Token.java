@@ -6,13 +6,15 @@ public class Token {
     public TokenType type;
     public String source;
     public Origin origin;
-    public int indentationLevel;
 
-    public Token(TokenType type, String source, Origin origin, int indentationLevel) {
+    public Token(TokenType type, String source, Origin origin) {
         this.type = type;
         this.source = source;
         this.origin = origin;
-        this.indentationLevel = indentationLevel;
+    }
+
+    public String toString() {
+        return (this.type == null ? "<UNKNOWN>" : this.type.toString()) + " (" + (this.source.indexOf("\n") > 0 ? " ... " : this.source) + ")";
     }
 
     public String getValue() {

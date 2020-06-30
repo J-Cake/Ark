@@ -77,23 +77,25 @@ public class Lexer extends Stage<String, ArrayList<Token>> {
         int lineCounter = 0;
 
         boolean isEscaped = false;
+        boolean wasEscaped = false;
+
         for (char i : source.toCharArray()) {
             if (i == config.escapeChar)
                 isEscaped = true;
+            else
+                line.append(i);
 
-            line.append(i);
-
-            if (!isEscaped && i == '\n') {
+            if (!wasEscaped && i == '\n') {
                 if (this.containsNonWhitespace(line.toString())) {
                     int indent = getLevel(line.toString());
 
                     if (indent <= 0) {
                         if (blockContent.length() > 0) {
-                            tokens.add(new Token(TokenType.Block, blockContent.toString(), new Origin(config.filename, lineCounter, indent), indent));
+                            tokens.add(new Token(TokenType.Block, blockContent.toString(), new Origin(config.filename, lineCounter, indent)));
                             blockContent = new StringBuilder();
                         }
 
-                        this.resolveTokens(config, tokens, line, lineCounter, indent);
+                        tokens.addAll(this.resolveTokens(config, line, lineCounter, indent));
                     } else
                         blockContent.append(line);
 
@@ -104,14 +106,15 @@ public class Lexer extends Stage<String, ArrayList<Token>> {
             if (i == '\n')
                 lineCounter++;
 
+            wasEscaped = isEscaped;
             isEscaped = false;
         }
 
         int indent = getLevel(line.toString());
         if (blockContent.length() > 0)
-            tokens.add(new Token(TokenType.Block, blockContent.toString(), new Origin(config.filename, lineCounter, indent), indent));
+            tokens.add(new Token(TokenType.Block, blockContent.toString(), new Origin(config.filename, lineCounter, indent)));
         if (line.length() > 0)
-            this.resolveTokens(config, tokens, line, lineCounter, indent);
+            tokens.addAll(this.resolveTokens(config, line, lineCounter, indent));
 
         StringBuilder log = new StringBuilder(); // basic output
 
@@ -124,13 +127,9 @@ public class Lexer extends Stage<String, ArrayList<Token>> {
             if (totalTokens > 0)
                 Log.i("Captured " + totalTokens + " tokens:");
 
-            for (Token t : tokens) {
+            for (Token t : tokens)
                 if ((t.type != TokenType.Comment && t.type != TokenType.NewLine) || !config.ignoreWhiteSpaceAndComments)
-                    log.append(t.type)
-                            .append("(")
-                            .append(t.getValue())
-                            .append("), ");
-            }
+                    log.append(t.toString());
 
             if (totalTokens > 0)
                 Log.i(log.toString());
@@ -139,16 +138,21 @@ public class Lexer extends Stage<String, ArrayList<Token>> {
         return tokens;
     }
 
-    private void resolveTokens(LexConfig config, ArrayList<Token> tokens, StringBuilder line, int lineCounter, int indent) {
+    private ArrayList<Token> resolveTokens(LexConfig config, StringBuilder line, int lineCounter, int indent) {
+        ArrayList<Token> tokens = new ArrayList<>();
         ArrayList<String> toks = matcher.splitTokens(line.toString());
         int _char = 0;
+
         for (String s : toks) {
             _char += s.length();
 
-            tokens.add(new Token(matcher.resolve(s), s, new Origin(config.filename, lineCounter, _char), indent));
+            if (matcher.resolve(s) != null)
+                tokens.add(new Token(matcher.resolve(s), s, new Origin(config.filename, lineCounter, _char)));
         }
 
-        tokens.add(new Token(TokenType.NewLine, "", new Origin(config.filename, lineCounter, _char + 1), indent));
+        tokens.add(new Token(TokenType.NewLine, "", new Origin(config.filename, lineCounter, _char + 1)));
+
+        return tokens;
     }
 
     public boolean containsNonWhitespace(String line) {
