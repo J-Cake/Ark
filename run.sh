@@ -1,0 +1,3 @@
+#!/bin/bash
+
+/opt/jdk-14.0.1/bin/java -javaagent:/snap/intellij-idea-ultimate/228/lib/idea_rt.jar=33531:/snap/intellij-idea-ultimate/228/bin -Dfile.encoding=UTF-8 -classpath /home/jcake/Code/Language/Java/Interpreter/target/classes:/home/jcake/.m2/repository/commons-cli/commons-cli/1.4/commons-cli-1.4.jar:/home/jcake/.m2/repository/junit/junit/4.13/junit-4.13.jar:/home/jcake/.m2/repository/org/hamcrest/hamcrest-core/1.3/hamcrest-core-1.3.jar au.com.jschneiderprojects.ark.Main /home/jcake/Code/Language/Ark/TestProject/test.ark
