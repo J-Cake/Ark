@@ -1,5 +1,6 @@
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 import au.com.jschneiderprojects.ark.Formatter.Reference;
 import au.com.jschneiderprojects.ark.Lexer.Grammar.TokenType;
@@ -66,5 +67,16 @@ public class LexTester {
 
         for (int i = 0; i < output.size(); i++)
             Assert.assertEquals("Compare Lexed output to expected output", output.get(i).type, expected[i]);
+    }
+
+    @Test
+    public void testSplitter() {
+        ArrayList<String> split = this.lex.matcher.splitTokens("int a = 1 + 2");
+
+        Log.i(split);
+
+        ArrayList<String> expected = new ArrayList<>(Arrays.asList("int", "a", "=", "1", "+", "2"));
+
+        Assert.assertEquals("Confirm the tokeniser splits the string into tokens correctly", split, expected);
     }
 }
