@@ -1,5 +1,10 @@
 import java.io.FileNotFoundException;
+import java.util.ArrayList;
 
+import au.com.jschneiderprojects.ark.Formatter.Reference;
+import au.com.jschneiderprojects.ark.Lexer.Grammar.TokenType;
+import au.com.jschneiderprojects.ark.Lexer.Token;
+import au.com.jschneiderprojects.ark.Log;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.Assert;
@@ -14,6 +19,7 @@ public class LexTester {
     String program_tab;
     String program_2space;
     String program_4space;
+    String source;
 
     @Before
     public void init() {
@@ -24,6 +30,8 @@ public class LexTester {
         this.program_tab = "int x = 3\n\nif x == 3\n\treturn true";
         this.program_2space = "int x = 3\n\nif x == 3\n  return true";
         this.program_4space = "int x = 3\n\nif x == 3\n    return true";
+
+        this.source = "int x = 1\nif x == 1\n\n    return 2";
     }
 
     String loadProgram() throws FileNotFoundException {
@@ -48,5 +56,15 @@ public class LexTester {
     @Test
     public void testLexer() {
         // TODO: Implement lexer test
+        ArrayList<Token> output = this.lex.receiveInput(source);
+
+        TokenType[] expected = new TokenType[]{
+                TokenType.Reference, TokenType.Reference, TokenType.Operator, TokenType.Int, TokenType.NewLine,
+                TokenType.Construct, TokenType.Reference, TokenType.Operator, TokenType.Int, TokenType.NewLine,
+                TokenType.Construct, TokenType.Int, TokenType.NewLine
+        };
+
+        for (int i = 0; i < output.size(); i++)
+            Assert.assertEquals("Compare Lexed output to expected output", output.get(i).type, expected[i]);
     }
 }
