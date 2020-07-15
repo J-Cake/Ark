@@ -60,13 +60,13 @@ public class LexTester {
         ArrayList<Token> output = this.lex.receiveInput(source);
 
         TokenType[] expected = new TokenType[]{
-                TokenType.Reference, TokenType.Reference, TokenType.Operator, TokenType.Int, TokenType.NewLine,
+                TokenType.Reference, TokenType.Reference, TokenType.Assignment, TokenType.Int, TokenType.NewLine,
                 TokenType.Construct, TokenType.Reference, TokenType.Operator, TokenType.Int, TokenType.NewLine,
                 TokenType.Construct, TokenType.Int, TokenType.NewLine
         };
 
         for (int i = 0; i < output.size(); i++)
-            Assert.assertEquals("Compare Lexed output to expected output", output.get(i).type, expected[i]);
+            Assert.assertEquals("Compare Lexed output to expected output", expected[i], output.get(i).type);
     }
 
     @Test
@@ -77,6 +77,6 @@ public class LexTester {
 
         ArrayList<String> expected = new ArrayList<>(Arrays.asList("int", "a", "=", "1", "+", "2"));
 
-        Assert.assertEquals("Confirm the tokeniser splits the string into tokens correctly", split, expected);
+        Assert.assertEquals("Confirm the tokeniser splits the string into tokens correctly", expected, split);
     }
 }

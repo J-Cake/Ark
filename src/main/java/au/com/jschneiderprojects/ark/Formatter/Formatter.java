@@ -1,14 +1,12 @@
 package au.com.jschneiderprojects.ark.Formatter;
 
-import au.com.jschneiderprojects.ark.*;
 import au.com.jschneiderprojects.ark.Error;
+import au.com.jschneiderprojects.ark.*;
 import au.com.jschneiderprojects.ark.Executer.Construct;
 import au.com.jschneiderprojects.ark.Lexer.Grammar.TokenType;
 import au.com.jschneiderprojects.ark.Lexer.Lexer;
 import au.com.jschneiderprojects.ark.Lexer.Token;
 
-import javax.swing.plaf.nimbus.State;
-import java.awt.image.ByteLookupTable;
 import java.util.ArrayList;
 
 public class Formatter extends Stage<ArrayList<Token>, Block> {
@@ -49,12 +47,16 @@ public class Formatter extends Stage<ArrayList<Token>, Block> {
                 } else if (t.type == TokenType.Block) {
                     if (construct != null && statement != null)
                         if (construct.takesBlock && statement.block == null)
-                            statement.block = this.receiveInput(this.parentStage.receiveInput(this.parentStage.reduceIndent(t.source, t.origin)));
+                            statement.block = this.receiveInput(
+                                    this.parentStage.receiveInput(this.parentStage.reduceIndent(t.source, t.origin)));
                 } else if (t.type == TokenType.NewLine) {
                     if (StatementBody.size() > 0) {
-                        statement = new Statement(construct, StatementBody, StatementBody.get(0).origin);
-
-                        BlockBody.add(statement);
+                        if (Assignment.matches(StatementBody))
+                            BlockBody.add(new Assignment(StatementBody, StatementBody.get(0).origin));
+                        else
+                            BlockBody.add(
+                                    statement = new Statement(construct, StatementBody, StatementBody.get(0).origin));
+                        // Log.i(BlockBody.get(BlockBody.size() - 1), BlockBody.get(BlockBody.size() - 1) instanceof Assignment);
                         StatementBody.clear();
                     }
                 } else
@@ -84,7 +86,9 @@ public class Formatter extends Stage<ArrayList<Token>, Block> {
 
             if (reference.size() > 0) {
                 tokens.add(new Reference(reference, reference.get(0).origin));
-                reference = new ArrayList<>(); // .clear() may result in changes within the object to carry over into the stored list within the Reference instance. Create a new object instead
+                reference = new ArrayList<>(); // .clear() may result in changes within the object to carry over into
+                                               // the stored list within the Reference instance. Create a new object
+                                               // instead
 
                 if (t.type == TokenType.Reference) {
                     reference.add(t);
@@ -130,14 +134,16 @@ public class Formatter extends Stage<ArrayList<Token>, Block> {
                         tokens.addAll(parameters);
                     parameters = new ArrayList<>();
                 } else if (bracketCount < 0) {
-                    this.internalError(new Error(t.origin, ErrorType.Syntax, "Unexpected )").verbose(parameters.toString()));
+                    this.internalError(
+                            new Error(t.origin, ErrorType.Syntax, "Unexpected )").verbose(parameters.toString()));
                     return null;
                 }
             }
         }
 
         if (parameters.size() > 0) {
-            this.internalError(new Error(parameters.get(0).origin, ErrorType.Syntax, "Mismatched parentheses").verbose(parameters.toString()));
+            this.internalError(new Error(parameters.get(0).origin, ErrorType.Syntax, "Mismatched parentheses")
+                    .verbose(parameters.toString()));
             return null;
         }
 

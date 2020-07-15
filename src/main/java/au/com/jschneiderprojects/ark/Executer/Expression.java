@@ -1,7 +1,6 @@
 package au.com.jschneiderprojects.ark.Executer;
 
 import au.com.jschneiderprojects.ark.Formatter.Invocation;
-import au.com.jschneiderprojects.ark.Formatter.Operators;
 import au.com.jschneiderprojects.ark.Formatter.Reference;
 import au.com.jschneiderprojects.ark.Lexer.Grammar.TokenType;
 import au.com.jschneiderprojects.ark.Lexer.Origin;
@@ -42,7 +41,7 @@ public class Expression {
     private boolean isLeftAssociative(Token operand1) {
         if (Operators.exists(operand1.source))
             try {
-                return Operators.getAssociativity(operand1.source.trim()) == Operators.LEFT_ASSOCIATIVE;
+                return Operators.isLeftAssociative(operand1.source.trim());
             } catch (Exception e) {
                 return false;
             }
