@@ -20,5 +20,6 @@ public enum TokenType {
     Reference,
     NewLine,
     Comment,
-    Invocation
+    Invocation,
+    Assignment
 }

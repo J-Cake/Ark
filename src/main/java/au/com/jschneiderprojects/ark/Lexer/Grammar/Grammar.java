@@ -1,9 +1,9 @@
 package au.com.jschneiderprojects.ark.Lexer.Grammar;
 
-import au.com.jschneiderprojects.ark.Formatter.Operators;
-import au.com.jschneiderprojects.ark.Lexer.Token;
+import au.com.jschneiderprojects.ark.Executer.Assignment;
 import au.com.jschneiderprojects.ark.Executer.Construct;
-import au.com.jschneiderprojects.ark.Log;
+import au.com.jschneiderprojects.ark.Executer.Operators;
+import au.com.jschneiderprojects.ark.Lexer.Token;
 
 import java.util.ArrayList;
 import java.util.regex.Matcher;
@@ -135,6 +135,17 @@ class Grammar {
             return this.isDelimiterOpen(characters.trim());
         }
     };
+    final TokenRule Assigment = new TokenRule(TokenType.Assignment) {
+        @Override
+        boolean matches(java.lang.String characters, ArrayList<Token> prev) {
+            Assignment[] entries = Assignment.values();
 
-    TokenRule[] rules = new TokenRule[]{LeftBrace, LeftBracket, LeftParenthesis, RightBrace, RightBracket, RightParenthesis, String, Int, Float, Boolean, Operator, SConstruct, Reference, Null, Block, Comma, SubReference, Comment};
+            for (Assignment entry : entries)
+                if (entry.identifier.equals(characters))
+                    return true;
+            return false;
+        }
+    };
+
+    TokenRule[] rules = new TokenRule[]{LeftBrace, LeftBracket, LeftParenthesis, RightBrace, RightBracket, RightParenthesis, String, Int, Float, Boolean, Operator, SConstruct, Reference, Null, Block, Comma, SubReference, Assigment, Comment};
 }
