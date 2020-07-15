@@ -5,9 +5,9 @@ import au.com.jschneiderprojects.ark.Formatter.Block;
 import au.com.jschneiderprojects.ark.Formatter.Formatter;
 import au.com.jschneiderprojects.ark.Stage;
 
-public class Executer extends Stage<Block, Scope> {
+public class Executor extends Stage<Block, Scope> {
     Formatter origin;
-    public Executer(Config<ExecuteConfig> config, Formatter parent) {
+    public Executor(Config<ExecuteConfig> config, Formatter parent) {
         super(config, parent);
     }
 

@@ -2,13 +2,12 @@ package au.com.jschneiderprojects.ark.Formatter;
 
 import au.com.jschneiderprojects.ark.Executer.Expression;
 import au.com.jschneiderprojects.ark.Lexer.Origin;
-import au.com.jschneiderprojects.ark.Lexer.Token;
 import au.com.jschneiderprojects.ark.Log;
 
 import java.util.ArrayList;
 
 public class Block {
-    ArrayList<Statement> body;
+    public ArrayList<Statement> body;
     Origin origin;
 
     public Block(Origin origin, ArrayList<Statement> body) {

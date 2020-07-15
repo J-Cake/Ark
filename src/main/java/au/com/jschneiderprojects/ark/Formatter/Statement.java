@@ -12,9 +12,9 @@ import java.util.Stack;
 
 public class Statement {
 
-    ArrayList<Expression> conditions;
-    Construct construct;
-    Block block;
+    public ArrayList<Expression> conditions;
+    public Construct construct;
+    public Block block;
     Origin origin;
 
     public Statement(Construct construct, ArrayList<Token> body, Origin origin) {

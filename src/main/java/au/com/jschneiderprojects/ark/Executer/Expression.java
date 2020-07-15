@@ -6,14 +6,12 @@ import au.com.jschneiderprojects.ark.Formatter.Reference;
 import au.com.jschneiderprojects.ark.Lexer.Grammar.TokenType;
 import au.com.jschneiderprojects.ark.Lexer.Origin;
 import au.com.jschneiderprojects.ark.Lexer.Token;
-import au.com.jschneiderprojects.ark.Log;
 
 import java.util.ArrayList;
 import java.util.Stack;
 
 public class Expression {
-
-    ArrayList<Token> tokens;
+    public ArrayList<Token> tokens;
     Origin origin;
 
     public Expression(ArrayList<Token> tokens) {

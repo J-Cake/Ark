@@ -1,40 +1,44 @@
 package au.com.jschneiderprojects.ark;
 
+import au.com.jschneiderprojects.ark.Compiler.CompileConfig;
+import au.com.jschneiderprojects.ark.Compiler.Compiler;
+import au.com.jschneiderprojects.ark.Executer.ExecuteConfig;
+import au.com.jschneiderprojects.ark.Executer.Scope;
+import au.com.jschneiderprojects.ark.Executer.Executor;
+import au.com.jschneiderprojects.ark.Formatter.Block;
+import au.com.jschneiderprojects.ark.Formatter.FormatConfig;
+import au.com.jschneiderprojects.ark.Formatter.Formatter;
+import au.com.jschneiderprojects.ark.Lexer.LexConfig;
+import au.com.jschneiderprojects.ark.Lexer.Lexer;
+import au.com.jschneiderprojects.ark.Lexer.Token;
+
+import org.apache.commons.cli.*;
+//import org.apache.commons.cli.*;
+//import org.apache.commons.cli.ParseException;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Scanner;
 
-import au.com.jschneiderprojects.ark.Formatter.Block;
-import au.com.jschneiderprojects.ark.Lexer.Token;
-import org.apache.commons.cli.*;
-
-import au.com.jschneiderprojects.ark.Executer.ExecuteConfig;
-import au.com.jschneiderprojects.ark.Executer.Executer;
-import au.com.jschneiderprojects.ark.Executer.Scope;
-import au.com.jschneiderprojects.ark.Formatter.FormatConfig;
-import au.com.jschneiderprojects.ark.Formatter.Formatter;
-import au.com.jschneiderprojects.ark.Lexer.LexConfig;
-import au.com.jschneiderprojects.ark.Lexer.Lexer;
-
 public class Main {
 
-    public static void main(String[] args) {
+    public static void main(final String[] args) {
         try {
             CLI(args);
-        } catch (ParseException e) {
+        } catch (final ParseException e) {
             e.printStackTrace();
         }
     }
 
-    public static String loadProgram(String filename) throws FileNotFoundException {
-        StringBuilder file = new StringBuilder();
+    public static String loadProgram(final String filename) throws FileNotFoundException {
+        final StringBuilder file = new StringBuilder();
 
-        File index = new File(filename);
+        final File index = new File(filename);
 
         if (index.exists()) {
-            Scanner reader = new Scanner(index);
+            final Scanner reader = new Scanner(index);
 
             while (reader.hasNextLine())
                 file.append(reader.nextLine()).append("\n");
@@ -44,47 +48,64 @@ public class Main {
             throw new FileNotFoundException();
     }
 
-    private static void runScript(String filename, Config<RunConfig> config) throws FileNotFoundException {
-        String program = loadProgram(filename);
+    private static void runScript(final String filename, final Config<RunConfig> config) throws FileNotFoundException {
+        final String source = loadProgram(filename);
 
-        Lexer lexer = new Lexer(new Config<>(new LexConfig() {
-        })); // Cannot pass configuration parameters to Lexer.
-        Formatter formatter = new Formatter(new Config<>(new FormatConfig() {
-        }), lexer); // I'm guessing it's the same story here
-        Executer executer = new Executer(new Config<>(new ExecuteConfig() {
-        }), formatter); // And here
+        final RunConfig preferences = (RunConfig) config.options;
 
-        ArrayList<Token> LexOutput = lexer.receiveInput(program);
-        Block FormatOutput = formatter.receiveInput(LexOutput);
-        Scope ExecuteOutput = executer.receiveInput(FormatOutput);
+        final Lexer lexer = new Lexer(new Config<>(new LexConfig() {
+        }));
+        final Formatter formatter = new Formatter(new Config<>(new FormatConfig() {
+        }), lexer);// Cannot pass configuration parameters to Lexer.
+// I'm guessing it's the same story here
 
-        if (((FormatConfig) formatter.preferences.options).verboseFormatLog)
-            FormatOutput.print();
+        if (preferences.runAsBytecode) {
+            final Compiler compiler = new Compiler(new Config<>(new CompileConfig() {
+            }), formatter);
 
-        Scope global = ExecuteOutput;
-//        Scope global = executer.receiveInput(formatter.receiveInput(lexer.receiveInput(program)));
-        // This should give us the global scope that we can use to make changes to the runtime state of the program
+            final ArrayList<Token> LexOutput = lexer.receiveInput(source);
+            final Block FormatOutput = formatter.receiveInput(LexOutput);
+            compiler.receiveInput(FormatOutput);
+//             ArrayList<Instruction> CompileOutput = compiler.receiveInput(FormatOutput);
+
+//            Log.i(FormatOutput.stringify(0));
+
+        } else {
+            final Executor executor = new Executor(new Config<>(new ExecuteConfig() {
+            }), formatter); // And here
+
+            final ArrayList<Token> LexOutput = lexer.receiveInput(source);
+            final Block FormatOutput = formatter.receiveInput(LexOutput);
+            final Scope ExecuteOutput = executor.receiveInput(FormatOutput);
+
+            final Scope global = ExecuteOutput;
+            // Scope global =
+            // executor.receiveInput(formatter.receiveInput(lexer.receiveInput(program)));
+            // This should give us the global scope that we can use to make changes to the
+            // runtime state of the program
+        }
     }
 
-    private static void CLI(String[] args) throws ParseException {
-        Options options = new Options();
+    private static void CLI(final String[] args) throws ParseException {
+        final Options options = new Options();
 
         options.addOption("help", "View help information");
-        options.addOption("p", "path", true, "Make sources visible to script through imports. Separate by paths by semicolon.");
+        options.addOption("p", "path", true,
+                "Make sources visible to script through imports. Separate by paths by semicolon.");
 
-        CommandLineParser parser = new DefaultParser();
+        final CommandLineParser parser = new DefaultParser();
 
-        CommandLine cmd = parser.parse(options, args);
+        final CommandLine cmd = parser.parse(options, args);
 
         // Config Buildup
 
-        Config<RunConfig> config = new Config<>(new RunConfig() {
+        final Config<RunConfig> config = new Config<>(new RunConfig() {
         });
 
         // Interrogation Stage
 
         if (cmd.hasOption("help") || args.length == 0) {
-            HelpFormatter formatter = new HelpFormatter();
+            final HelpFormatter formatter = new HelpFormatter();
             final PrintWriter writer = new PrintWriter(System.out);
             formatter.printUsage(writer, 80, "Ark Interpreter", options);
             formatter.printHelp("Parameters", options);
@@ -93,7 +114,7 @@ public class Main {
             if (args[0] != null)
                 try {
                     runScript(args[0], config);
-                } catch (FileNotFoundException e) {
+                } catch (final FileNotFoundException e) {
                     System.err.println("The file doesn't exist");
                 }
         }

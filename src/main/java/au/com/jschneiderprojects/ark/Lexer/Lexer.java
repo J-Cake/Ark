@@ -9,7 +9,7 @@ import au.com.jschneiderprojects.ark.Lexer.Grammar.TokenType;
 import java.util.ArrayList;
 
 public class Lexer extends Stage<String, ArrayList<Token>> {
-    GrammarMatcher matcher;
+    public GrammarMatcher matcher;
     public String indent;
 
     public Lexer(Config<LexConfig> config) {
