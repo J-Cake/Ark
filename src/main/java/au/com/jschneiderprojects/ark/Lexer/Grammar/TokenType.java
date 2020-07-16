@@ -21,5 +21,6 @@ public enum TokenType {
     NewLine,
     Comment,
     Invocation,
-    Assignment
+    Assignment,
+    Lambda
 }

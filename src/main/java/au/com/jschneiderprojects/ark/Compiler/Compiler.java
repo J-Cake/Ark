@@ -16,11 +16,18 @@ public class Compiler extends Stage<Block, ArrayList<Instruction>> {
 
     @Override
     public ArrayList<Instruction> receiveInput(Block o) {
+        CompileConfig config = (CompileConfig) this.preferences.options;
 
         ArrayList<Instruction> bytecode = new ArrayList<>();
 
-        for (Statement statement : o.body)
-            Log.i(statement.construct == null ? "<NullConstruct>" : statement.construct.identifier, statement, Construct.fromStatement(statement).convert());
+        for (Statement statement : o.body) {
+            ArrayList<Instruction> instructions = Construct.fromStatement(statement).convert();
+            if (config.verboseCompileLog)
+                Log.i(statement.construct == null ? "<NullConstruct>" : statement.construct.identifier.toUpperCase(), statement, instructions == null ? "<No Action>" : instructions);
+
+            if (instructions != null)
+                bytecode.addAll(instructions);
+        }
 //            bytecode.addAll(ConstructHandler.fromStatement(statement).convert());
 
         return bytecode;

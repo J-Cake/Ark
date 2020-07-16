@@ -123,6 +123,12 @@ class Grammar {
             return characters.equals(",");
         }
     };
+    final TokenRule Lambda = new TokenRule(TokenType.Lambda) {
+        @Override
+        boolean matches(java.lang.String characters, ArrayList<Token> prev) {
+            return characters.equals("=>");
+        }
+    };
     final TokenRule SubReference = new TokenRule(TokenType.SubReference) {
         @Override
         boolean matches(java.lang.String characters, ArrayList<Token> prev) {
@@ -147,5 +153,5 @@ class Grammar {
         }
     };
 
-    TokenRule[] rules = new TokenRule[]{LeftBrace, LeftBracket, LeftParenthesis, RightBrace, RightBracket, RightParenthesis, String, Int, Float, Boolean, Operator, SConstruct, Reference, Null, Block, Comma, SubReference, Assigment, Comment};
+    TokenRule[] rules = new TokenRule[]{LeftBrace, LeftBracket, LeftParenthesis, RightBrace, RightBracket, RightParenthesis, String, Int, Float, Boolean, Lambda, Operator, SConstruct, Reference, Null, Block, Comma, SubReference, Assigment, Comment};
 }

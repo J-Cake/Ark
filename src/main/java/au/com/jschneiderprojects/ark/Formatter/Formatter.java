@@ -30,6 +30,7 @@ public class Formatter extends Stage<ArrayList<Token>, Block> {
 
         ArrayList<Statement> BlockBody = new ArrayList<>();
         ArrayList<Token> StatementBody = new ArrayList<>();
+        ArrayList<Token> PreConstruct = new ArrayList<>();
 
         Construct construct = null;
         Statement statement = null;
@@ -42,6 +43,10 @@ public class Formatter extends Stage<ArrayList<Token>, Block> {
                     for (Construct c : Construct.values())
                         if (c.identifier.equals(t.source)) {
                             construct = c;
+                            if (StatementBody.size() > 0) {
+                                PreConstruct = StatementBody;
+                                StatementBody = new ArrayList<>();
+                            }
                             break;
                         }
                 } else if (t.type == TokenType.Block) {
@@ -53,9 +58,14 @@ public class Formatter extends Stage<ArrayList<Token>, Block> {
                     if (StatementBody.size() > 0) {
                         if (Assignment.matches(StatementBody))
                             BlockBody.add(new Assignment(StatementBody, StatementBody.get(0).origin));
-                        else
+                        else {
+                            if (PreConstruct.size() > 0)
+                                BlockBody.add(
+                                        statement = new Statement(construct, PreConstruct, StatementBody, StatementBody.get(0).origin));
+                                else
                             BlockBody.add(
                                     statement = new Statement(construct, StatementBody, StatementBody.get(0).origin));
+                        }
                         // Log.i(BlockBody.get(BlockBody.size() - 1), BlockBody.get(BlockBody.size() - 1) instanceof Assignment);
                         StatementBody.clear();
                     }
@@ -63,6 +73,9 @@ public class Formatter extends Stage<ArrayList<Token>, Block> {
                     StatementBody.add(t);
             }
         }
+
+        if (config.verboseFormatLog)
+            Log.i("Creating Block", BlockBody);
 
         return new Block(input.get(0).origin, BlockBody);
     }

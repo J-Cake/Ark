@@ -3,7 +3,6 @@ package au.com.jschneiderprojects.ark.Compiler.Constructs;
 import au.com.jschneiderprojects.ark.Compiler.*;
 import au.com.jschneiderprojects.ark.Formatter.Assignment;
 import au.com.jschneiderprojects.ark.Formatter.Statement;
-import au.com.jschneiderprojects.ark.Log;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -23,8 +22,6 @@ public class Null extends Construct {
             declaration.add(new Instruction(InstructionType.DECLARE, Arrays.asList(variable, new PrimitiveOther(((Assignment)this.statement).lhs.get(0).source))));
 
         declaration.addAll(new PrimitiveExpression(((Assignment) this.statement).rhs).convert());
-
-        Log.i("Assignment", declaration);
 
         return declaration;
     }

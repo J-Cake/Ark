@@ -9,7 +9,7 @@ import java.util.ArrayList;
 public class Invocation extends Token {
 
     Reference reference;
-    ArrayList<Expression> parameters;
+    public ArrayList<Expression> parameters;
 
     Invocation(Reference object, ArrayList<Token> parameters) {
         super(TokenType.Invocation, Reference.stringify(parameters), parameters.size() == 0 ? object.origin : parameters.get(0).origin);
