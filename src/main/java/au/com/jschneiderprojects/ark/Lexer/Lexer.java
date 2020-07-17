@@ -8,15 +8,14 @@ import au.com.jschneiderprojects.ark.Lexer.Grammar.TokenType;
 
 import java.util.ArrayList;
 
-public class Lexer extends Stage<String, ArrayList<Token>> {
+public class Lexer extends Stage<LexConfig, String, ArrayList<Token>> {
     public GrammarMatcher matcher;
     public String indent;
 
-    public Lexer(Config<LexConfig> config) {
+    public Lexer(LexConfig config) {
         super(config);
 
-        this.matcher = new GrammarMatcher(new Config<>(new GrammarConfig() {
-        }));
+        this.matcher = new GrammarMatcher(new GrammarConfig());
 
         this.indent = "";
     }
@@ -65,7 +64,6 @@ public class Lexer extends Stage<String, ArrayList<Token>> {
 
     public ArrayList<Token> receiveInput(String source) {
         // lex the incoming source code
-        LexConfig config = (LexConfig) (preferences.options);
 
         ArrayList<Token> tokens = new ArrayList<>();
 
@@ -80,7 +78,7 @@ public class Lexer extends Stage<String, ArrayList<Token>> {
         boolean wasEscaped = false;
 
         for (char i : source.toCharArray()) {
-            if (i == config.escapeChar)
+            if (i == preferences.escapeChar())
                 isEscaped = true;
             else
                 line.append(i);
@@ -91,11 +89,11 @@ public class Lexer extends Stage<String, ArrayList<Token>> {
 
                     if (indent <= 0) {
                         if (blockContent.length() > 0) {
-                            tokens.add(new Token(TokenType.Block, blockContent.toString(), new Origin(config.filename, lineCounter, indent)));
+                            tokens.add(new Token(TokenType.Block, blockContent.toString(), new Origin(preferences.fileName(), lineCounter, indent)));
                             blockContent = new StringBuilder();
                         }
 
-                        tokens.addAll(this.resolveTokens(config, line, lineCounter, indent));
+                        tokens.addAll(this.resolveTokens(preferences, line, lineCounter));
                     } else
                         blockContent.append(line);
 
@@ -112,23 +110,23 @@ public class Lexer extends Stage<String, ArrayList<Token>> {
 
         int indent = getLevel(line.toString());
         if (blockContent.length() > 0)
-            tokens.add(new Token(TokenType.Block, blockContent.toString(), new Origin(config.filename, lineCounter, indent)));
+            tokens.add(new Token(TokenType.Block, blockContent.toString(), new Origin(preferences.fileName(), lineCounter, indent)));
         if (line.length() > 0)
-            tokens.addAll(this.resolveTokens(config, line, lineCounter, indent));
+            tokens.addAll(this.resolveTokens(preferences, line, lineCounter));
 
         StringBuilder log = new StringBuilder(); // basic output
 
         int totalTokens = 0;
         for (Token t : tokens)
-            if ((t.type != TokenType.Comment && t.type != TokenType.NewLine) || !config.ignoreWhiteSpaceAndComments)
+            if ((t.type != TokenType.Comment && t.type != TokenType.NewLine) || !preferences.ignoreWhiteSpaceAndComments())
                 totalTokens++;
 
-        if (config.verboseLexLog) {
+        if (preferences.verboseLexLog()) {
             if (totalTokens > 0)
                 Log.i("Captured " + totalTokens + " tokens:");
 
             for (Token t : tokens)
-                if ((t.type != TokenType.Comment && t.type != TokenType.NewLine) || !config.ignoreWhiteSpaceAndComments)
+                if ((t.type != TokenType.Comment && t.type != TokenType.NewLine) || !preferences.ignoreWhiteSpaceAndComments())
                     log.append(t.toString());
 
             if (totalTokens > 0)
@@ -138,7 +136,7 @@ public class Lexer extends Stage<String, ArrayList<Token>> {
         return tokens;
     }
 
-    private ArrayList<Token> resolveTokens(LexConfig config, StringBuilder line, int lineCounter, int indent) {
+    private ArrayList<Token> resolveTokens(LexConfig preferences, StringBuilder line, int lineCounter) {
         ArrayList<Token> tokens = new ArrayList<>();
         ArrayList<String> toks = matcher.splitTokens(line.toString());
         int _char = 0;
@@ -147,10 +145,10 @@ public class Lexer extends Stage<String, ArrayList<Token>> {
             _char += s.length();
 
             if (matcher.resolve(s) != null)
-                tokens.add(new Token(matcher.resolve(s), s, new Origin(config.filename, lineCounter, _char)));
+                tokens.add(new Token(matcher.resolve(s), s, new Origin(preferences.fileName(), lineCounter, _char)));
         }
 
-        tokens.add(new Token(TokenType.NewLine, "", new Origin(config.filename, lineCounter, _char + 1)));
+        tokens.add(new Token(TokenType.NewLine, "", new Origin(preferences.fileName(), lineCounter, _char + 1)));
 
         return tokens;
     }
@@ -175,7 +173,7 @@ public class Lexer extends Stage<String, ArrayList<Token>> {
                 reduced.append(line.substring(this.indent.length()));
                 reduced.append('\n');
             } else {
-                if (((LexConfig) this.preferences.options).verboseLexLog)
+                if (preferences.verboseLexLog())
                     Log.e(source);
                 this.internalError(new Error(origin, ErrorType.Syntax, "Cannot reduce 0 indentation", true).verbose(line), true);
                 return null;

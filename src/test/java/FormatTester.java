@@ -1,17 +1,14 @@
-import au.com.jschneiderprojects.ark.Config;
 import au.com.jschneiderprojects.ark.Formatter.Block;
 import au.com.jschneiderprojects.ark.Formatter.FormatConfig;
 import au.com.jschneiderprojects.ark.Formatter.Formatter;
-import au.com.jschneiderprojects.ark.Formatter.Invocation;
 import au.com.jschneiderprojects.ark.Lexer.Grammar.TokenType;
 import au.com.jschneiderprojects.ark.Lexer.LexConfig;
 import au.com.jschneiderprojects.ark.Lexer.Lexer;
 import au.com.jschneiderprojects.ark.Lexer.Token;
 import au.com.jschneiderprojects.ark.Log;
-
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.Assert;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -23,10 +20,8 @@ public class FormatTester {
 
     @Before
     public void init() {
-        this.lexer = new Lexer(new Config<>(new LexConfig() {
-        }));
-        this.formatter = new Formatter(new Config<>(new FormatConfig() {
-        }), lexer);
+        this.lexer = new Lexer(new LexConfig("<Inline>", '\\', false, 0, false));
+        this.formatter = new Formatter(new FormatConfig(false), lexer);
 
         this.source = "int x = 1\nif x == 1\n    return 2";
     }

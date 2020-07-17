@@ -1,5 +1,3 @@
 package au.com.jschneiderprojects.ark.Formatter;
 
-public interface FormatConfig {
-    boolean verboseFormatLog = false;
-}
+public record FormatConfig(boolean verboseFormatLog) {}

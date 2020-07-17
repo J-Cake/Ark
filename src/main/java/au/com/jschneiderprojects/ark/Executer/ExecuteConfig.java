@@ -1,4 +1,3 @@
 package au.com.jschneiderprojects.ark.Executer;
 
-public interface ExecuteConfig {
-}
+public record ExecuteConfig(boolean verboseExecuteLog) {}

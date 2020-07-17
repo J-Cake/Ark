@@ -1,5 +1,3 @@
 package au.com.jschneiderprojects.ark;
 
-public interface RunConfig {
-    public boolean runAsBytecode = true;
-}
+public record RunConfig (boolean omitBytecode, boolean debugLog) {}

@@ -1,20 +1,18 @@
 package au.com.jschneiderprojects.ark.Lexer.Grammar;
 
-import au.com.jschneiderprojects.ark.Config;
 import au.com.jschneiderprojects.ark.Lexer.Token;
-import au.com.jschneiderprojects.ark.Log;
 
 import java.util.ArrayList;
 
 public class GrammarMatcher {
-    Config<GrammarConfig> config;
+    GrammarConfig config;
     Grammar grammar;
 
     ArrayList<Token> tokenList;
 
     public StringBuilder blockContent = new StringBuilder();
 
-    public GrammarMatcher(Config<GrammarConfig> config) {
+    public GrammarMatcher(GrammarConfig config) {
         this.config = config;
         this.grammar = new Grammar();
     }

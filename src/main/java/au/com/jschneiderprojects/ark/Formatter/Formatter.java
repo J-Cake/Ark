@@ -1,29 +1,29 @@
 package au.com.jschneiderprojects.ark.Formatter;
 
 import au.com.jschneiderprojects.ark.Error;
-import au.com.jschneiderprojects.ark.*;
+import au.com.jschneiderprojects.ark.ErrorType;
 import au.com.jschneiderprojects.ark.Executer.Construct;
 import au.com.jschneiderprojects.ark.Lexer.Grammar.TokenType;
 import au.com.jschneiderprojects.ark.Lexer.Lexer;
 import au.com.jschneiderprojects.ark.Lexer.Token;
+import au.com.jschneiderprojects.ark.Log;
+import au.com.jschneiderprojects.ark.Stage;
 
 import java.util.ArrayList;
 
-public class Formatter extends Stage<ArrayList<Token>, Block> {
+public class Formatter extends Stage<FormatConfig, ArrayList<Token>, Block> {
     Lexer parentStage;
 
-    public Formatter(Config<FormatConfig> config, Lexer parent) {
-        super(config, parent);
+    public Formatter(FormatConfig preferences, Lexer parent) {
+        super(preferences, parent);
         this.parentStage = parent;
 
-        if (config.options.verboseFormatLog)
+        if (preferences.verboseFormatLog())
             Log.i("Received " + parent.getClass().getName());
     }
 
     public Block receiveInput(ArrayList<Token> input) {
-        FormatConfig config = (FormatConfig) (preferences.options);
-
-        if (config.verboseFormatLog)
+        if (preferences.verboseFormatLog())
             if (this.parentStage == null)
                 Log.e("Invalid Lexer instance");
         // format the incoming tokens
@@ -74,7 +74,7 @@ public class Formatter extends Stage<ArrayList<Token>, Block> {
             }
         }
 
-        if (config.verboseFormatLog)
+        if (preferences.verboseFormatLog())
             Log.i("Creating Block", BlockBody);
 
         return new Block(input.get(0).origin, BlockBody);
