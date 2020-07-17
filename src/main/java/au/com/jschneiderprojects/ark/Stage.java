@@ -1,6 +1,6 @@
 package au.com.jschneiderprojects.ark;
 
-public abstract class Stage<Input, Output> {
+public abstract class Stage<Config, Input, Output> {
     public Config preferences;
     public Stage parentStage;
 

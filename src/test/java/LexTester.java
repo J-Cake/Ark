@@ -1,19 +1,16 @@
+import au.com.jschneiderprojects.ark.Lexer.Grammar.TokenType;
+import au.com.jschneiderprojects.ark.Lexer.LexConfig;
+import au.com.jschneiderprojects.ark.Lexer.Lexer;
+import au.com.jschneiderprojects.ark.Lexer.Token;
+import au.com.jschneiderprojects.ark.Log;
+import au.com.jschneiderprojects.ark.Main;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.Arrays;
-
-import au.com.jschneiderprojects.ark.Formatter.Reference;
-import au.com.jschneiderprojects.ark.Lexer.Grammar.TokenType;
-import au.com.jschneiderprojects.ark.Lexer.Token;
-import au.com.jschneiderprojects.ark.Log;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.Assert;
-
-import au.com.jschneiderprojects.ark.Config;
-import au.com.jschneiderprojects.ark.Lexer.LexConfig;
-import au.com.jschneiderprojects.ark.Lexer.Lexer;
-import au.com.jschneiderprojects.ark.Main;
 
 public class LexTester {
     Lexer lex;
@@ -24,8 +21,7 @@ public class LexTester {
 
     @Before
     public void init() {
-        this.lex = new Lexer(new Config<>(new LexConfig() {
-        }));
+        this.lex = new Lexer(new LexConfig("<Inline>", '\\', false, 0, false));
 
         // this.program = loadProgram();
         this.program_tab = "int x = 3\n\nif x == 3\n\treturn true";
