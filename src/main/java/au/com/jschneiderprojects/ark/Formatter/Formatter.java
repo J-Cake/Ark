@@ -30,6 +30,7 @@ public class Formatter extends Stage<FormatConfig, ArrayList<Token>, Block> {
 
         ArrayList<Statement> BlockBody = new ArrayList<>();
         ArrayList<Token> StatementBody = new ArrayList<>();
+        ArrayList<Token> PreConstruct = new ArrayList<>();
 
         Construct construct = null;
         Statement statement = null;
@@ -42,23 +43,39 @@ public class Formatter extends Stage<FormatConfig, ArrayList<Token>, Block> {
                     for (Construct c : Construct.values())
                         if (c.identifier.equals(t.source)) {
                             construct = c;
+                            if (StatementBody.size() > 0) {
+                                PreConstruct = StatementBody;
+                                StatementBody = new ArrayList<>();
+                            }
                             break;
                         }
                 } else if (t.type == TokenType.Block) {
                     if (construct != null && statement != null)
                         if (construct.takesBlock && statement.block == null)
-                            statement.block = this.receiveInput(this.parentStage.receiveInput(this.parentStage.reduceIndent(t.source, t.origin)));
+                            statement.block = this.receiveInput(
+                                    this.parentStage.receiveInput(this.parentStage.reduceIndent(t.source, t.origin)));
                 } else if (t.type == TokenType.NewLine) {
                     if (StatementBody.size() > 0) {
-                        statement = new Statement(construct, StatementBody, StatementBody.get(0).origin);
-
-                        BlockBody.add(statement);
+                        if (Assignment.matches(StatementBody))
+                            BlockBody.add(new Assignment(StatementBody, StatementBody.get(0).origin));
+                        else {
+                            if (PreConstruct.size() > 0)
+                                BlockBody.add(
+                                        statement = new Statement(construct, PreConstruct, StatementBody, StatementBody.get(0).origin));
+                                else
+                            BlockBody.add(
+                                    statement = new Statement(construct, StatementBody, StatementBody.get(0).origin));
+                        }
+                        // Log.i(BlockBody.get(BlockBody.size() - 1), BlockBody.get(BlockBody.size() - 1) instanceof Assignment);
                         StatementBody.clear();
                     }
                 } else
                     StatementBody.add(t);
             }
         }
+
+        if (preferences.verboseFormatLog())
+            Log.i("Creating Block", BlockBody);
 
         return new Block(input.get(0).origin, BlockBody);
     }
@@ -82,7 +99,9 @@ public class Formatter extends Stage<FormatConfig, ArrayList<Token>, Block> {
 
             if (reference.size() > 0) {
                 tokens.add(new Reference(reference, reference.get(0).origin));
-                reference = new ArrayList<>(); // .clear() may result in changes within the object to carry over into the stored list within the Reference instance. Create a new object instead
+                reference = new ArrayList<>(); // .clear() may result in changes within the object to carry over into
+                                               // the stored list within the Reference instance. Create a new object
+                                               // instead
 
                 if (t.type == TokenType.Reference) {
                     reference.add(t);
@@ -128,14 +147,16 @@ public class Formatter extends Stage<FormatConfig, ArrayList<Token>, Block> {
                         tokens.addAll(parameters);
                     parameters = new ArrayList<>();
                 } else if (bracketCount < 0) {
-                    this.internalError(new Error(t.origin, ErrorType.Syntax, "Unexpected )").verbose(parameters.toString()));
+                    this.internalError(
+                            new Error(t.origin, ErrorType.Syntax, "Unexpected )").verbose(parameters.toString()));
                     return null;
                 }
             }
         }
 
         if (parameters.size() > 0) {
-            this.internalError(new Error(parameters.get(0).origin, ErrorType.Syntax, "Mismatched parentheses").verbose(parameters.toString()));
+            this.internalError(new Error(parameters.get(0).origin, ErrorType.Syntax, "Mismatched parentheses")
+                    .verbose(parameters.toString()));
             return null;
         }
 
